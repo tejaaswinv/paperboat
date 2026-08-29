@@ -34,7 +34,7 @@ export default async function JoinPage({ params }) {
             <span className="join-wave">﹏﹏﹏﹏﹏</span>
           </div>
         </div>
-        <RegistrationForm event={event} />
+        <RegistrationForm event={{ slug: event.slug }} />
       </div>
     </section>
   );
