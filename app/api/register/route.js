@@ -1,6 +1,8 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getEvent } from "@/lib/events";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
 
@@ -26,16 +28,19 @@ function makeRegistrationId(eventNumber) {
   return `PB${eventNumber}-${suffix}`;
 }
 
+function registrationDocId(eventSlug, email) {
+  return crypto.createHash("sha256").update(`${eventSlug}:${email}`).digest("hex");
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
 
-    // Honeypot: pretend success so bots do not learn how to bypass it.
     if (clean(body.website, 120)) {
       return NextResponse.json({ ok: true, registrationId: "PB-OK" });
     }
 
-    const event = getEvent(clean(body.eventSlug, 100));
+    const event = await getEvent(clean(body.eventSlug, 100));
     if (!event || event.status !== "open") {
       return NextResponse.json({ error: "That event is not open for registration." }, { status: 400 });
     }
@@ -56,16 +61,58 @@ export async function POST(request) {
       return NextResponse.json({ error: "Email consent is required so we can send event logistics." }, { status: 400 });
     }
 
+    const db = getAdminDb();
+    if (!db) {
+      return NextResponse.json(
+        { error: "Registration storage is not configured yet. Add the Firebase environment variables." },
+        { status: 503 }
+      );
+    }
+
+    const docId = registrationDocId(event.slug, email);
+    const ref = db.collection("registrations").doc(docId);
+    const existing = await ref.get();
+    if (existing.exists) {
+      return NextResponse.json({
+        ok: true,
+        registrationId: existing.data().registrationId,
+        alreadyRegistered: true,
+      });
+    }
+
     const registrationId = makeRegistrationId(event.number);
+    const registration = {
+      registrationId,
+      eventSlug: event.slug,
+      eventNumber: event.number,
+      eventTitle: event.title,
+      name,
+      email,
+      city,
+      role,
+      team,
+      idea,
+      github,
+      consent,
+      createdAt: new Date().toISOString(),
+      emailStatus: "pending",
+    };
+    await ref.set(registration);
+
     const devBypass = process.env.NODE_ENV !== "production" && process.env.EMAIL_DEV_BYPASS === "true";
 
     if (!process.env.RESEND_API_KEY) {
+      await ref.update({ emailStatus: devBypass ? "dev-bypass" : "not-configured" });
       if (devBypass) {
-        console.log("[Paper Boat registration — email bypass]", { registrationId, event: event.slug, name, email, city, role, team, idea, github });
+        console.log("[Paper Boat registration — email bypass]", registration);
         return NextResponse.json({ ok: true, registrationId, devBypass: true });
       }
       return NextResponse.json(
-        { error: "Email delivery is not configured. Add RESEND_API_KEY and RESEND_FROM_EMAIL." },
+        {
+          error: "You are registered, but confirmation email is not configured yet. Add RESEND_API_KEY and RESEND_FROM_EMAIL.",
+          registrationId,
+          stored: true,
+        },
         { status: 503 }
       );
     }
@@ -81,15 +128,15 @@ export async function POST(request) {
         <div style="max-width:620px;margin:auto;background:#fffdf7;border:2px solid #563b32;border-radius:18px;padding:32px;box-shadow:8px 8px 0 #f0a45d">
           <p style="font-size:13px;letter-spacing:.12em;text-transform:uppercase">Paper Boat #${escapeHtml(event.number)}</p>
           <h1 style="font-size:34px;line-height:1.05;margin:10px 0 18px">you’re in the boat, ${escapeHtml(name)}.</h1>
-          <p style="font-size:17px;line-height:1.6">We got your registration for <strong>${escapeHtml(event.title)}</strong>. Keep this email — the venue and practical details will arrive here when they’re ready.</p>
+          <p style="font-size:17px;line-height:1.6">We got your registration for <strong>${escapeHtml(event.title)}</strong>. Paper Boat is online-first, so your build-room link and final logistics will arrive by email.</p>
           <div style="margin:26px 0;padding:20px;border:1px dashed #9d6654;border-radius:12px;background:#fff9ec">
             <p style="margin:0 0 8px"><strong>Registration:</strong> ${registrationId}</p>
             <p style="margin:0 0 8px"><strong>When:</strong> ${escapeHtml(event.date)}</p>
-            <p style="margin:0 0 8px"><strong>Where:</strong> ${escapeHtml(event.location)}</p>
-            <p style="margin:0"><strong>Your crew status:</strong> ${escapeHtml(team)}</p>
+            <p style="margin:0 0 8px"><strong>Timezone:</strong> ${escapeHtml(event.timezone)}</p>
+            <p style="margin:0"><strong>Format:</strong> 8 PM → 8 PM build + growth, then 8–9 PM demos/results</p>
           </div>
           <a href="${eventUrl}" style="display:inline-block;background:#ee7b48;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:700">event page →</a>
-          <p style="font-size:14px;line-height:1.5;margin-top:28px;color:#80665d">Bring a laptop, charger, curiosity, and an unreasonable willingness to ship unfinished things.</p>
+          <p style="font-size:14px;line-height:1.5;margin-top:28px;color:#80665d">Bring an idea, a laptop, and a plan to find real users before the 24-hour clock stops.</p>
         </div>
       </div>`;
 
@@ -134,9 +181,18 @@ export async function POST(request) {
     const failed = results.find((result) => result.error);
     if (failed) {
       console.error("Resend error", failed.error);
-      return NextResponse.json({ error: "Registration was received, but the confirmation email could not be sent. Check your Resend sender/domain settings." }, { status: 502 });
+      await ref.update({ emailStatus: "failed" });
+      return NextResponse.json(
+        {
+          error: "Registration was saved, but the confirmation email could not be sent. Check your Resend sender/domain settings.",
+          registrationId,
+          stored: true,
+        },
+        { status: 502 }
+      );
     }
 
+    await ref.update({ emailStatus: "sent" });
     return NextResponse.json({ ok: true, registrationId, devBypass: false });
   } catch (error) {
     console.error("Registration error", error);
