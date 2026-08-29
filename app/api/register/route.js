@@ -86,6 +86,7 @@ export async function POST(request) {
       eventSlug: event.slug,
       eventNumber: event.number,
       eventTitle: event.title,
+      eventMode: event.eventMode,
       name,
       email,
       city,
@@ -122,17 +123,27 @@ export async function POST(request) {
     const organizer = process.env.ORGANIZER_EMAIL;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const eventUrl = `${siteUrl}/events/${event.slug}`;
+    const isOnline = event.eventMode === "online";
+    const isHybrid = event.eventMode === "hybrid";
+    const modeLabel = isOnline ? "Online" : isHybrid ? "Hybrid" : "Offline / in person";
+    const logisticsCopy = isOnline
+      ? "Your private online build-room link and final logistics will arrive by email."
+      : isHybrid
+        ? "Your online room link plus physical venue and check-in logistics will arrive by email."
+        : "Your venue, check-in details and final in-person logistics will arrive by email.";
 
     const participantHtml = `
       <div style="background:#f6f0df;padding:36px 18px;font-family:Arial,sans-serif;color:#563b32">
         <div style="max-width:620px;margin:auto;background:#fffdf7;border:2px solid #563b32;border-radius:18px;padding:32px;box-shadow:8px 8px 0 #f0a45d">
           <p style="font-size:13px;letter-spacing:.12em;text-transform:uppercase">Paper Boat #${escapeHtml(event.number)}</p>
           <h1 style="font-size:34px;line-height:1.05;margin:10px 0 18px">you’re in the boat, ${escapeHtml(name)}.</h1>
-          <p style="font-size:17px;line-height:1.6">We got your registration for <strong>${escapeHtml(event.title)}</strong>. Paper Boat is online-first, so your build-room link and final logistics will arrive by email.</p>
+          <p style="font-size:17px;line-height:1.6">We got your registration for <strong>${escapeHtml(event.title)}</strong>. ${escapeHtml(logisticsCopy)}</p>
           <div style="margin:26px 0;padding:20px;border:1px dashed #9d6654;border-radius:12px;background:#fff9ec">
             <p style="margin:0 0 8px"><strong>Registration:</strong> ${registrationId}</p>
             <p style="margin:0 0 8px"><strong>When:</strong> ${escapeHtml(event.date)}</p>
             <p style="margin:0 0 8px"><strong>Timezone:</strong> ${escapeHtml(event.timezone)}</p>
+            <p style="margin:0 0 8px"><strong>Mode:</strong> ${escapeHtml(modeLabel)}</p>
+            ${!isOnline ? `<p style="margin:0 0 8px"><strong>Location:</strong> ${escapeHtml(event.location)}</p>` : ""}
             <p style="margin:0"><strong>Format:</strong> 8 PM → 8 PM build + growth, then 8–9 PM demos/results</p>
           </div>
           <a href="${eventUrl}" style="display:inline-block;background:#ee7b48;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:700">event page →</a>
@@ -146,6 +157,7 @@ export async function POST(request) {
         <p><strong>${escapeHtml(name)}</strong> joined <strong>${escapeHtml(event.title)}</strong>.</p>
         <table cellpadding="7" style="border-collapse:collapse">
           <tr><td><strong>ID</strong></td><td>${registrationId}</td></tr>
+          <tr><td><strong>Mode</strong></td><td>${escapeHtml(modeLabel)}</td></tr>
           <tr><td><strong>Email</strong></td><td>${escapeHtml(email)}</td></tr>
           <tr><td><strong>City</strong></td><td>${escapeHtml(city)}</td></tr>
           <tr><td><strong>Role</strong></td><td>${escapeHtml(role)}</td></tr>
