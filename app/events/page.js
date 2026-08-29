@@ -11,9 +11,9 @@ export default async function EventsPage() {
     <section className="page-hero events-page">
       <div className="shell">
         <p className="eyebrow">paper boat events</p>
-        <h1>one internet.<br /><em>ridiculous ideas.</em></h1>
+        <h1>build live.<br /><em>leave a trail.</em></h1>
         <p className="page-lede">
-          Paper Boat is online-first. Each edition gives you exactly 24 hours to build and grow a software product: 8 PM to 8 PM the next day, followed by one hour of demos, judging and results.
+          Most Paper Boats happen online. Open editions give you exactly 24 hours to build, launch and acquire users; finished editions turn into public archives showing the challenge topic, recap, builders and the products they shipped.
         </p>
         <div className="events-grid">
           {events.map((event) => <EventCard key={event.slug} event={event} />)}
