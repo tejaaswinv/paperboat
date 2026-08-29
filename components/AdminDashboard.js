@@ -3,6 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./AdminDashboard.module.css";
 
+const onlineGuideDefault =
+  "Deploy something usable in the first few hours — do not wait for polish.\n" +
+  "Start sharing early. Your first users should influence what you build next.\n" +
+  "Keep one visible traction metric: sign-ups, active users, sessions or another honest usage signal.\n" +
+  "Freeze risky features in the final four hours and focus on reliability + distribution.\n" +
+  "Keep proof of traction ready for judging: analytics, sign-ups, active users or usage screenshots.\n" +
+  "For the 8–9 PM demo hour: show the product first, then user numbers, then what you learned.";
+
+const offlineFlowDefault =
+  "19:00 | doors open + check-in\n" +
+  "19:30 | welcome + rules + team formation\n" +
+  "20:00 | 24-hour clock starts\n" +
+  "00:00 | midnight checkpoint\n" +
+  "08:00 +1 | breakfast + progress check\n" +
+  "16:00 +1 | final four-hour push\n" +
+  "20:00 +1 | hands off keyboard\n" +
+  "20:00–21:00 +1 | demos + judging + results";
+
 const emptyEvent = {
   title: "",
   slug: "",
@@ -19,13 +37,34 @@ const emptyEvent = {
   capacity: "0",
   description: "",
   longDescription: "",
+  topic: "",
+  recap: "",
   tagsText: "AI, agents, software, growth, online, real users",
   promptsText: "",
   judgingText:
     "Functionality — does the product work, and how complete/useful is it?\nTraction — how many real users did you acquire inside the 24-hour window?",
   scheduleText:
     "19:30 | online room opens + introductions\n20:00 | 24-hour clock starts — build begins\n00:00 | midnight checkpoint + user-acquisition plans\n08:00 +1 | halfway checkpoint — keep building + keep growing\n16:00 +1 | final four-hour push\n20:00 +1 | ship. build + growth window closes.\n20:00–21:00 +1 | live demos + judging + results",
+  onlineGuideText: onlineGuideDefault,
+  offlineFlowText: "",
+  showcaseText: "",
 };
+
+function scheduleToText(items) {
+  return (items || [])
+    .map((item) => `${item.time || ""} | ${item.label || ""}`)
+    .join("\n");
+}
+
+function textToSchedule(text) {
+  return text
+    .split("\n")
+    .map((line) => {
+      const [time, ...rest] = line.split("|");
+      return { time: time.trim(), label: rest.join("|").trim() };
+    })
+    .filter((item) => item.time || item.label);
+}
 
 function eventToForm(event) {
   return {
@@ -35,8 +74,11 @@ function eventToForm(event) {
     tagsText: (event.tags || []).join(", "),
     promptsText: (event.prompts || []).join("\n"),
     judgingText: (event.judging || []).join("\n"),
-    scheduleText: (event.schedule || [])
-      .map((item) => `${item.time || ""} | ${item.label || ""}`)
+    scheduleText: scheduleToText(event.schedule),
+    onlineGuideText: (event.onlineGuide || []).join("\n"),
+    offlineFlowText: scheduleToText(event.offlineFlow),
+    showcaseText: (event.showcase || [])
+      .map((item) => [item.name, item.project, item.url, item.outcome].join(" | "))
       .join("\n"),
   };
 }
@@ -48,13 +90,16 @@ function formToPayload(form) {
     tags: form.tagsText.split(",").map((x) => x.trim()).filter(Boolean),
     prompts: form.promptsText.split("\n").map((x) => x.trim()).filter(Boolean),
     judging: form.judgingText.split("\n").map((x) => x.trim()).filter(Boolean),
-    schedule: form.scheduleText
+    schedule: textToSchedule(form.scheduleText),
+    onlineGuide: form.onlineGuideText.split("\n").map((x) => x.trim()).filter(Boolean),
+    offlineFlow: textToSchedule(form.offlineFlowText),
+    showcase: form.showcaseText
       .split("\n")
       .map((line) => {
-        const [time, ...rest] = line.split("|");
-        return { time: time.trim(), label: rest.join("|").trim() };
+        const [name = "", project = "", url = "", outcome = ""] = line.split("|").map((x) => x.trim());
+        return { name, project, url, outcome };
       })
-      .filter((item) => item.time || item.label),
+      .filter((item) => item.name || item.project),
   };
 }
 
@@ -135,7 +180,24 @@ export default function AdminDashboard() {
 
   function updateField(event) {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => {
+      const next = { ...current, [name]: value };
+      if (name === "eventMode") {
+        if (value === "online") {
+          next.location = current.location.startsWith("Online") ? current.location : "Online · worldwide";
+          next.venue = "Online build room · link sent to registered builders";
+          if (!current.onlineGuideText.trim()) next.onlineGuideText = onlineGuideDefault;
+        } else if (value === "in-person") {
+          if (current.location.startsWith("Online")) next.location = "";
+          if (current.venue.startsWith("Online")) next.venue = "";
+          if (!current.offlineFlowText.trim()) next.offlineFlowText = offlineFlowDefault;
+        } else if (value === "hybrid") {
+          if (!current.onlineGuideText.trim()) next.onlineGuideText = onlineGuideDefault;
+          if (!current.offlineFlowText.trim()) next.offlineFlowText = offlineFlowDefault;
+        }
+      }
+      return next;
+    });
   }
 
   function newEvent() {
@@ -225,6 +287,9 @@ export default function AdminDashboard() {
     );
   }
 
+  const needsOnline = form.eventMode === "online" || form.eventMode === "hybrid";
+  const needsOffline = form.eventMode === "in-person" || form.eventMode === "hybrid";
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.toolbar}>
@@ -252,21 +317,42 @@ export default function AdminDashboard() {
               <label className={styles.full}>Event title<input name="title" value={form.title} onChange={updateField} required /></label>
               <label>Slug<input name="slug" value={form.slug} onChange={updateField} placeholder="auto-from-title" disabled={Boolean(editingSlug)} /></label>
               <label>Event number<input name="number" value={form.number} onChange={updateField} placeholder="auto" /></label>
-              <label>Status<select name="status" value={form.status} onChange={updateField}><option value="draft">Draft</option><option value="open">Open registration</option><option value="past">Past</option></select></label>
-              <label>Format<select name="eventMode" value={form.eventMode} onChange={updateField}><option value="online">Online</option><option value="hybrid">Hybrid</option><option value="in-person">In person</option></select></label>
-              <label>Challenge start date<input type="date" name="startDate" value={form.startDate} onChange={updateField} /><small>8 PM start → 8 PM next day. Demos run until 9 PM.</small></label>
+              <label>Status<select name="status" value={form.status} onChange={updateField}><option value="draft">Draft</option><option value="open">Open registration</option><option value="past">Past / finished</option></select></label>
+              <label>Is this online or offline?<select name="eventMode" value={form.eventMode} onChange={updateField}><option value="online">Online</option><option value="in-person">Offline / in person</option><option value="hybrid">Hybrid</option></select></label>
+              <label>Challenge start date<input type="date" name="startDate" value={form.startDate} onChange={updateField} /><small>8 PM start → 8 PM next day. Demos/results can run 8–9 PM.</small></label>
               <label>Display date<input name="date" value={form.date} onChange={updateField} placeholder="12 Sep 2026 · 8 PM" /></label>
               <label>Timezone<input name="timezone" value={form.timezone} onChange={updateField} /></label>
-              <label>Capacity<input min="0" type="number" name="capacity" value={form.capacity} onChange={updateField} /><small>0 = no hard online cap.</small></label>
-              <label>Location<input name="location" value={form.location} onChange={updateField} /></label>
-              <label>Venue / room note<input name="venue" value={form.venue} onChange={updateField} /></label>
-              <label className={styles.full}>Private meeting / Discord link<input name="meetingUrl" value={form.meetingUrl} onChange={updateField} placeholder="Stored in Firebase; not shown publicly by default" /></label>
+              <label>Capacity<input min="0" type="number" name="capacity" value={form.capacity} onChange={updateField} /><small>0 = no hard cap.</small></label>
+
+              {needsOffline && (
+                <>
+                  <label>City / location<input name="location" value={form.location} onChange={updateField} placeholder="Singapore" /></label>
+                  <label>Venue + detailed address<input name="venue" value={form.venue} onChange={updateField} placeholder="Venue, building, floor, room, address" /></label>
+                  <label className={styles.full}>Detailed offline event flow<textarea name="offlineFlowText" value={form.offlineFlowText} onChange={updateField} rows="9" placeholder={offlineFlowDefault} /><small>For an offline event, spell out the physical flow: arrival, briefing, food, checkpoints, overnight access, final demos, judging and exit. Use <code>19:00 | doors open</code>.</small></label>
+                </>
+              )}
+
+              {needsOnline && (
+                <>
+                  <label className={styles.full}>Private meeting / Discord link<input name="meetingUrl" value={form.meetingUrl} onChange={updateField} placeholder="Stored in Firebase; not shown publicly by default" /></label>
+                  <label className={styles.full}>Online agenda / builder workflow + tips<textarea name="onlineGuideText" value={form.onlineGuideText} onChange={updateField} rows="9" /><small>This becomes the public “how to survive the 24 hours” guide. One tip or workflow step per line.</small></label>
+                </>
+              )}
+
               <label className={styles.full}>Short description<textarea name="description" value={form.description} onChange={updateField} rows="3" /></label>
               <label className={styles.full}>Full event description<textarea name="longDescription" value={form.longDescription} onChange={updateField} rows="5" /></label>
+              <label className={styles.full}>Topic / challenge theme<input name="topic" value={form.topic} onChange={updateField} placeholder="What is this edition actually about?" /></label>
               <label className={styles.full}>Tags<input name="tagsText" value={form.tagsText} onChange={updateField} /><small>Comma separated.</small></label>
               <label className={styles.full}>Judging criteria<textarea name="judgingText" value={form.judgingText} onChange={updateField} rows="4" /><small>One criterion per line.</small></label>
               <label className={styles.full}>Prompt ideas<textarea name="promptsText" value={form.promptsText} onChange={updateField} rows="4" /><small>One prompt per line.</small></label>
-              <label className={styles.full}>Schedule<textarea name="scheduleText" value={form.scheduleText} onChange={updateField} rows="8" /><small>Use <code>20:00 | challenge begins</code>.</small></label>
+              <label className={styles.full}>Public challenge clock / schedule<textarea name="scheduleText" value={form.scheduleText} onChange={updateField} rows="8" /><small>Use <code>20:00 | challenge begins</code>.</small></label>
+
+              {form.status === "past" && (
+                <>
+                  <label className={styles.full}>Finished-event recap<textarea name="recap" value={form.recap} onChange={updateField} rows="6" placeholder="What happened, what the edition focused on, memorable outcomes, total builders, etc." /></label>
+                  <label className={styles.full}>Public participant + shipped-project archive<textarea name="showcaseText" value={form.showcaseText} onChange={updateField} rows="8" placeholder="Builder name | Product name | https://product.com | 312 users in 24h" /><small>One public showcase entry per line. Only add names/projects you actually want published.</small></label>
+                </>
+              )}
             </div>
 
             <button className="button button-big" disabled={busy}>{busy ? "saving…" : editingSlug ? "save changes →" : "schedule event →"}</button>
@@ -285,6 +371,7 @@ export default function AdminDashboard() {
                   <span className={styles.status}>{event.status} · {event.eventMode}</span>
                   <h3>#{event.number} {event.title}</h3>
                   <p>{event.date} · {event.timezone}</p>
+                  {event.topic && <p>{event.topic}</p>}
                   <p>{registrationCounts[event.slug] || 0} registrations</p>
                 </div>
                 <div className={styles.cardActions}>
