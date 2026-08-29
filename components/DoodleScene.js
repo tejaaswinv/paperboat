@@ -6,26 +6,30 @@ export default function DoodleScene() {
       className="doodle-scene"
       style={{
         width: "100%",
-        maxWidth: 610,
+        maxWidth: 640,
+        aspectRatio: "1.68 / 1",
         justifySelf: "end",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <Image
         src="/paperboat-hero.png"
         alt="Paper Boat AI build challenge illustration with a laptop sailing in a paper boat"
-        width={1088}
-        height={648}
+        width={2048}
+        height={1024}
         priority
         unoptimized
-        sizes="(max-width: 800px) 92vw, 610px"
+        sizes="(max-width: 800px) 94vw, 640px"
         style={{
-          width: "100%",
+          position: "absolute",
+          width: "188%",
+          maxWidth: "none",
           height: "auto",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -52%)",
           display: "block",
-          objectFit: "contain",
           imageRendering: "auto",
         }}
       />
