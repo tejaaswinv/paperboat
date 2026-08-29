@@ -3,8 +3,11 @@ import DoodleScene from "@/components/DoodleScene";
 import EventCard from "@/components/EventCard";
 import { getEvents } from "@/lib/events";
 
-export default function Home() {
-  const nextEvent = getEvents().find((event) => event.status === "open");
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const events = await getEvents();
+  const nextEvent = events.find((event) => event.status === "open");
 
   return (
     <>
@@ -14,15 +17,19 @@ export default function Home() {
             <p className="kicker"><span>24 hours</span> · build it · ship it · grow it</p>
             <h1>build something.<br /><em>get people using it.</em></h1>
             <p className="hero-lede">
-              Paper Boat is a 24-hour AI build-and-growth challenge: start at 8 PM, ship a real software product by 8 PM the next day, and pull in as many users as you can before the clock stops.
+              Paper Boat is an online-first AI build-and-growth challenge: start at 8 PM, ship a real software product by 8 PM the next day, and pull in as many users as you can before the clock stops.
             </p>
             <div className="hero-actions">
-              <Link href="/join/ship-something-weird" className="button button-big">join the next boat →</Link>
+              {nextEvent ? (
+                <Link href={`/join/${nextEvent.slug}`} className="button button-big">join the next boat →</Link>
+              ) : (
+                <Link href="/events" className="button button-big">see upcoming boats →</Link>
+              )}
               <Link href="/events" className="scribble-link">peek at events</Link>
             </div>
             <div className="micro-proof">
               <span>⚡ AI tools encouraged</span>
-              <span>⌁ exactly 24 hours</span>
+              <span>⌁ online-first · exactly 24 hours</span>
               <span>↗ functionality + users win</span>
             </div>
           </div>
@@ -36,7 +43,7 @@ export default function Home() {
           <p className="eyebrow">why are we doing this?</p>
           <h2>Because building is only half the fun. Shipping and finding users is the other half.</h2>
           <p className="big-copy">
-            You get one night and one day to turn an idea into a working software product. Use AI agents, APIs, open models, no-code or anything else that helps. Then put it in front of real people and see if they actually use it.
+            Join from wherever you are. You get one night and one day to turn an idea into a working software product. Use AI agents, APIs, open models, no-code or anything else that helps. Then put it in front of real people and see if they actually use it.
           </p>
         </div>
         <div className="shell three-cards">
@@ -44,35 +51,37 @@ export default function Home() {
             <span className="card-number">01</span>
             <div className="mini-doodle">⌁</div>
             <h3>8 PM — start</h3>
-            <p>The clock begins. Pick an idea, form a team if you want, and start building from scratch or a fresh branch.</p>
+            <p>The online room opens, the clock begins, and you start building. Solo or team is fine.</p>
           </article>
           <article className="story-card tilt-right">
             <span className="card-number">02</span>
             <div className="mini-doodle">⌨</div>
             <h3>build + launch</h3>
-            <p>Use AI shamelessly. Get the software working, deploy it, and start finding real users while everyone else is still polishing.</p>
+            <p>Use AI shamelessly. Get the software working, deploy it, and start finding real users while the clock is still running.</p>
           </article>
           <article className="story-card tilt-left-light">
             <span className="card-number">03</span>
             <div className="mini-doodle">↗</div>
             <h3>8 PM +1 — stop</h3>
-            <p>Exactly 24 hours later, building and growth stop. Projects are judged on functionality and the number of users acquired.</p>
+            <p>Exactly 24 hours later, building and growth stop. From 8–9 PM, products are demoed and judged on functionality and users acquired.</p>
           </article>
         </div>
       </section>
 
-      <section className="section event-highlight">
-        <div className="shell split-heading">
-          <div>
-            <p className="eyebrow">the next one</p>
-            <h2>get in the boat.</h2>
+      {nextEvent && (
+        <section className="section event-highlight">
+          <div className="shell split-heading">
+            <div>
+              <p className="eyebrow">the next one</p>
+              <h2>get in the boat.</h2>
+            </div>
+            <p className="margin-note">online-first · 24 hours · real users</p>
           </div>
-          <p className="margin-note">24 hours · one working product · real users</p>
-        </div>
-        <div className="shell event-single">
-          <EventCard event={nextEvent} />
-        </div>
-      </section>
+          <div className="shell event-single">
+            <EventCard event={nextEvent} />
+          </div>
+        </section>
+      )}
 
       <section className="section rules-section" id="rules">
         <div className="shell rules-grid">
@@ -100,7 +109,7 @@ export default function Home() {
           <div className="tiny-boat">△</div>
           <p className="eyebrow">okay then</p>
           <h2>Can you go from zero to working product to real users in one day?</h2>
-          <Link href="/join/ship-something-weird" className="button button-big">come build it →</Link>
+          {nextEvent && <Link href={`/join/${nextEvent.slug}`} className="button button-big">come build it →</Link>}
         </div>
       </section>
     </>
