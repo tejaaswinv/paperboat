@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The site talks to Firestore only through the server-side Admin SDK.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
