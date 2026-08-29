@@ -11,19 +11,19 @@ export default function Home() {
       <section className="hero paper-section">
         <div className="shell hero-grid">
           <div className="hero-copy">
-            <p className="kicker"><span>24 hours</span> · one tiny idea · absolutely no pitch deck</p>
-            <h1>build something.<br /><em>ship it before sleep.</em></h1>
+            <p className="kicker"><span>24 hours</span> · build it · ship it · grow it</p>
+            <h1>build something.<br /><em>get people using it.</em></h1>
             <p className="hero-lede">
-              Paper Boat is a not-too-serious AI build party for developers, designers, students and serial side-project starters.
+              Paper Boat is a 24-hour AI build-and-growth challenge: start at 8 PM, ship a real software product by 8 PM the next day, and pull in as many users as you can before the clock stops.
             </p>
             <div className="hero-actions">
               <Link href="/join/ship-something-weird" className="button button-big">join the next boat →</Link>
               <Link href="/events" className="scribble-link">peek at events</Link>
             </div>
             <div className="micro-proof">
-              <span>☕ chai included</span>
-              <span>⌁ beginners welcome</span>
-              <span>↗ you must ship</span>
+              <span>⚡ AI tools encouraged</span>
+              <span>⌁ exactly 24 hours</span>
+              <span>↗ functionality + users win</span>
             </div>
           </div>
           <DoodleScene />
@@ -34,29 +34,29 @@ export default function Home() {
       <section className="section why-section" id="how-it-works">
         <div className="shell narrow center">
           <p className="eyebrow">why are we doing this?</p>
-          <h2>Because side projects were more fun before they needed a business model.</h2>
+          <h2>Because building is only half the fun. Shipping and finding users is the other half.</h2>
           <p className="big-copy">
-            Remember making weird little things just to see if they worked? That. Except now we have foundation models, cheap APIs and much faster ways to break production.
+            You get one night and one day to turn an idea into a working software product. Use AI agents, APIs, open models, no-code or anything else that helps. Then put it in front of real people and see if they actually use it.
           </p>
         </div>
         <div className="shell three-cards">
           <article className="story-card tilt-left">
             <span className="card-number">01</span>
             <div className="mini-doodle">⌁</div>
-            <h3>arrive with curiosity</h3>
-            <p>Bring an idea, a half-idea, or absolutely nothing. Prompt cards and accidental teammates are provided.</p>
+            <h3>8 PM — start</h3>
+            <p>The clock begins. Pick an idea, form a team if you want, and start building from scratch or a fresh branch.</p>
           </article>
           <article className="story-card tilt-right">
             <span className="card-number">02</span>
             <div className="mini-doodle">⌨</div>
-            <h3>make for 24 hours</h3>
-            <p>Use whatever helps: agents, APIs, open models, no-code, cardboard, solder, duct tape. It only needs to work enough.</p>
+            <h3>build + launch</h3>
+            <p>Use AI shamelessly. Get the software working, deploy it, and start finding real users while everyone else is still polishing.</p>
           </article>
           <article className="story-card tilt-left-light">
             <span className="card-number">03</span>
             <div className="mini-doodle">↗</div>
-            <h3>put it on the internet</h3>
-            <p>No judging panel. The finish line is a URL, repo, APK, video, hardware demo, or something equally undeniable.</p>
+            <h3>8 PM +1 — stop</h3>
+            <p>Exactly 24 hours later, building and growth stop. Projects are judged on functionality and the number of users acquired.</p>
           </article>
         </div>
       </section>
@@ -67,7 +67,7 @@ export default function Home() {
             <p className="eyebrow">the next one</p>
             <h2>get in the boat.</h2>
           </div>
-          <p className="margin-note">small rooms &gt; giant conferences</p>
+          <p className="margin-note">24 hours · one working product · real users</p>
         </div>
         <div className="shell event-single">
           <EventCard event={nextEvent} />
@@ -83,13 +83,13 @@ export default function Home() {
             <div className="dotted-path" />
           </div>
           <div>
-            <p className="eyebrow">the non-rules</p>
-            <h2>please do not make this feel like work.</h2>
+            <p className="eyebrow">the rules</p>
+            <h2>build fast. launch faster. make people care.</h2>
             <ul className="rules-list">
-              <li><span>01</span><p><strong>new builds only-ish.</strong> A forgotten repo, abandoned prototype, or fresh branch is fine. Just make meaningful new stuff here.</p></li>
-              <li><span>02</span><p><strong>use AI shamelessly.</strong> This is not an exam. Use copilots, agents, generated UI, models, APIs and each other.</p></li>
-              <li><span>03</span><p><strong>help people.</strong> If someone is stuck on the thing you know, unstick them. You can go back to your bug after.</p></li>
-              <li><span>04</span><p><strong>ship something.</strong> Tiny and alive beats giant and “almost done.”</p></li>
+              <li><span>01</span><p><strong>the clock is real.</strong> The challenge starts at 8 PM and ends at 8 PM the following day — exactly 24 hours.</p></li>
+              <li><span>02</span><p><strong>use AI shamelessly.</strong> Agents, copilots, generated UI, APIs, open models, no-code — anything that helps you build a better product faster.</p></li>
+              <li><span>03</span><p><strong>get real users.</strong> Do not stop at localhost. Deploy it, share it, sell it, post it, DM it — get people genuinely using the product during the challenge.</p></li>
+              <li><span>04</span><p><strong>functionality + traction.</strong> Judging is based on how well the product works and how many users you acquire inside the 24-hour window.</p></li>
             </ul>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function Home() {
         <div className="shell center narrow">
           <div className="tiny-boat">△</div>
           <p className="eyebrow">okay then</p>
-          <h2>What would you make if nobody asked for a roadmap?</h2>
+          <h2>Can you go from zero to working product to real users in one day?</h2>
           <Link href="/join/ship-something-weird" className="button button-big">come build it →</Link>
         </div>
       </section>
