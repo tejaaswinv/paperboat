@@ -16,7 +16,7 @@ export default async function Home() {
         <div className="shell hero-grid">
           <div className="hero-copy">
             <p className="kicker"><span>24 hours</span> · build it · ship it · grow it</p>
-            <h1>build something.<br /><em>get people using it.</em></h1>
+            <h1 style={{ lineHeight: ".96" }}>build something.<br /><em>get people using it.</em></h1>
             <p className="hero-lede">
               Paper Boat is an online-first AI build-and-growth challenge: start at 8 PM, ship a real software product by 8 PM the next day, and pull in as many users as you can before the clock stops.
             </p>
