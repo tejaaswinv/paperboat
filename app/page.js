@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import DoodleScene from "@/components/DoodleScene";
 import EventCard from "@/components/EventCard";
+import RulesArt from "@/components/RulesArt";
 import { getEvents } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
@@ -87,15 +87,7 @@ export default async function Home() {
       <section className="section rules-section" id="rules">
         <div className="shell rules-grid">
           <div className="rules-art">
-            <Image
-              src="/paperboat-rules-cycle.png"
-              alt="Paper Boat 24-hour AI build, ship and grow challenge cycle"
-              width={900}
-              height={900}
-              unoptimized
-              sizes="(max-width: 900px) 88vw, 520px"
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
+            <RulesArt />
           </div>
           <div>
             <p className="eyebrow">the rules</p>
