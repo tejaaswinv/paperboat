@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export const dynamic = "force-dynamic";
 
 const CHUNKS = [
@@ -12,14 +14,18 @@ const CHUNKS = [
   "c5.txt",
 ];
 
+const sha256 = (value) =>
+  createHash("sha256").update(value).digest("hex");
+
 export async function GET(request) {
-  const origin = new URL(request.url).origin;
+  const url = new URL(request.url);
+  const origin = url.origin;
 
   try {
     const parts = await Promise.all(
       CHUNKS.map(async (file) => {
         const response = await fetch(`${origin}/rules-final2/${file}`, {
-          cache: "force-cache",
+          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -30,18 +36,30 @@ export async function GET(request) {
       })
     );
 
-    // The first stored chunk contains a long repeated PNG scanline sequence.
-    // GitHub's text transport collapsed three identical 12-character repeats
-    // while the rest of the PNG payload was preserved. Restore those bytes
-    // server-side before decoding so the browser always receives one valid PNG.
     const scanlineRepeat = "WLVq0aNGiRYs";
     const firstPart = parts[0].replace(
       "O3t6iRYs",
       `O3t6iRYs${scanlineRepeat.repeat(3)}`
     );
 
-    const base64 = [firstPart, ...parts.slice(1)].join("");
+    const fixedParts = [firstPart, ...parts.slice(1)];
+    const base64 = fixedParts.join("");
     const image = Buffer.from(base64, "base64");
+
+    if (url.searchParams.get("debug") === "1") {
+      return Response.json({
+        chunks: CHUNKS.map((file, index) => ({
+          file,
+          originalLength: parts[index].length,
+          finalLength: fixedParts[index].length,
+          sha256: sha256(fixedParts[index]),
+        })),
+        base64Length: base64.length,
+        base64Sha256: sha256(base64),
+        imageLength: image.length,
+        imageSha256: sha256(image),
+      });
+    }
 
     return new Response(image, {
       status: 200,
