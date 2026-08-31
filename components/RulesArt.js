@@ -12,7 +12,7 @@ export default function RulesArt() {
       }}
     >
       <img
-        src="/api/rules-art?v=coffee-final-v3"
+        src="/paperboat-rules-cycle.png?v=layout-v2"
         alt="Paper Boat 24-hour AI challenge cycle with a 24h clock, AI coding laptop, paper boat, coffee cup, users, and functionality plus traction judging"
         width="900"
         height="900"
