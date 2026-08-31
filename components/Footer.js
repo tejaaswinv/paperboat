@@ -6,7 +6,6 @@ export default function Footer() {
       <div className="shell footer-inner">
         <div>
           <Logo compact />
-          <p className="footer-note">A tiny independent AI builder community. Not affiliated with Hector Beverages or Paper Boat Drinks.</p>
         </div>
         <div className="footer-copy">
           <p>made for side-project people.</p>
